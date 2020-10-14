@@ -87,7 +87,7 @@ $(function() {
   });
 
   $(load_remote_image).on('click', function() {
-    var imageLayer = L.imageOverlay($(url).val(), [[0,0],[Number($(w).val()),Number($(h).val())]]).addTo(map);
+    var imageLayer = L.imageOverlay($(url).val(), [[0,0],[Number($(h).val()),Number($(w).val())]]).addTo(map);
     map.fitBounds(imageLayer._bounds);
   });
 
@@ -187,8 +187,8 @@ h2 {
 <ul class="w3-ul w3-border">
 <li>
 Image URL: <input type="text" id="url" size="60" value="https://upload.wikimedia.org/wikipedia/commons/2/26/Schloss_Benrath_04.04.2015-3_tonemapped.jpg"><br/>
-Width: <input type="text" id="w" size="6" value="3042"><br/>
-Height:<input type="text" id="h" size="6" value="4032"><br/>
+Width: <input type="text" id="w" size="6" value="4032"><br/>
+Height:<input type="text" id="h" size="6" value="3042"><br/>
 <input type="button" id="load_remote_image" value="Load remote image"><span id="loadingindicator" class="w3-yellow">Loading...please wait</span> <br/>
 </li>
 <li>
