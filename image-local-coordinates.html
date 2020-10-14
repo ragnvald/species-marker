@@ -124,7 +124,7 @@ var markerChange = function(marker,species) {
 */
 var writeCSV = function() {
   // csv header
-  var res = "datasetid"+sepChar+"lat"+sepChar+"lon"+sepChar+"species\n";
+  var res = "datasetid"+sepChar+"y"+sepChar+"x"+sepChar+"species\n";
   const dsid = $(datasetid).val();
 
   speciesMarkers = markerGroup.getLayers();
