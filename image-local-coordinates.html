@@ -12,9 +12,6 @@
   <script async src="https://cdn.jsdelivr.net/npm/geotiff"></script>
 
 <script>
-// the markers are stored in a global array
-var speciesMarkers = Array();
-
 var sepChar;
 
 var tiff;
@@ -27,20 +24,25 @@ var layerControl;
 
 var map;
 
+var markerGroup;
+
 $(function() {
  
   map = L.map("map", {minZoom: -10, maxZoom: 25, crs: L.CRS.Simple});
 
+  markerGroup = L.layerGroup().addTo(map);
 
   map.on('click', function(e) {
     // create marker
-    var m = new L.marker(e.latlng).addTo(map);
+    var m = new L.marker(e.latlng, {draggable: true}).addTo(markerGroup);
     // add a species attribute
     m.species = undefined;
+    // dragging the marker will update the CSV
+    m.on('dragend', writeCSV);
     // create and show empty popup, will be filled on popupopen
     m.bindPopup("<div/>").openPopup();
     // store in global speciesMarkers array
-    speciesMarkers.push(m);
+    // speciesMarkers.push(m);
   });
 
   map.on('popupopen', function(evt) {
@@ -53,8 +55,17 @@ $(function() {
       // trigger marker change function
       markerChange(evt.popup._source, evt.popup._source.species);
     });
+    var pc = $("<div/>");
+    // construct a "delete this marker" link
+    var del_link = $('<a href="#" style="color:red; align:right">delete marker</a>');    
+    del_link.on('click', function() {
+      evt.popup._source.removeFrom(markerGroup);
+      markerChange(evt.popup._source, undefined);
+    });
+    pc.append(selectElement,"<br/>",del_link);
+
     // set the select element as the contents of the popup. The [0] gets the native DOM element, which is necessary for setContent.
-    evt.popup.setContent(selectElement[0]);
+    evt.popup.setContent(pc[0]);
   });
 
   // dataset id is first column in csv; write CSV if changed
@@ -115,6 +126,8 @@ var writeCSV = function() {
   // csv header
   var res = "datasetid"+sepChar+"lat"+sepChar+"lon"+sepChar+"species\n";
   const dsid = $(datasetid).val();
+
+  speciesMarkers = markerGroup.getLayers();
 
   for (var i=0;i<speciesMarkers.length;i++) {
       
