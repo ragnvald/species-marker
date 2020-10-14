@@ -1,0 +1,228 @@
+<html>
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.2/proj4.min.js" integrity="sha512-EKjCCRjU5ClBwaRb6dGbElFNWJTE7Ek7+PlXelkum5uofPwlf6u2VRch1ty3csFCQn9XdyX89Te8jVg61qtm3Q==" crossorigin="anonymous"></script>
+
+  <script async src="https://cdn.jsdelivr.net/npm/geotiff"></script>
+
+<script>
+// the markers are stored in a global array
+var speciesMarkers = Array();
+
+var sepChar;
+
+var tiff;
+
+var canvas;
+
+var global_rgb, global_canvas;
+
+var layerControl;
+
+var map;
+
+$(function() {
+ 
+  map = L.map("map", {minZoom: -10, maxZoom: 25, crs: L.CRS.Simple});
+
+
+  map.on('click', function(e) {
+    // create marker
+    var m = new L.marker(e.latlng).addTo(map);
+    // add a species attribute
+    m.species = undefined;
+    // create and show empty popup, will be filled on popupopen
+    m.bindPopup("<div/>").openPopup();
+    // store in global speciesMarkers array
+    speciesMarkers.push(m);
+  });
+
+  map.on('popupopen', function(evt) {
+    // create a select dropdown menu
+    var selectElement = $(constructSelectElementText(evt.popup._source.species));
+    // attach event handler
+    selectElement.on('change', function() {
+      // popup._source is the marker, store the selected list value on the marker
+      evt.popup._source.species = selectElement.val();
+      // trigger marker change function
+      markerChange(evt.popup._source, evt.popup._source.species);
+    });
+    // set the select element as the contents of the popup. The [0] gets the native DOM element, which is necessary for setContent.
+    evt.popup.setContent(selectElement[0]);
+  });
+
+  // dataset id is first column in csv; write CSV if changed
+  $(datasetid).on('change', writeCSV);
+
+  // CSV separator character; store and write CSV if changed
+  $(sc).on('change',function() {
+    sepChar = $(sc).val();
+    writeCSV();
+  });
+ 
+  sepChar = $(sc).val();
+
+  $(helpcard).hide();
+
+  $(loadingindicator).hide();
+  
+  $(openhelp).on('click', function(e) {
+    $(helpcard).toggle();
+    $(helpcard).css({
+                "position": "absolute",
+                "background-color":"white",
+                "left": e.pageX + 'px',
+                "top": e.pageY + 'px'
+            })
+  });
+
+  $(closehelp).on('click',function() {
+    $(helpcard).hide();
+  });
+
+  $(load_remote_image).on('click', function() {
+    var imageLayer = L.imageOverlay($(url).val(), [[0,0],[Number($(w).val()),Number($(h).val())]]).addTo(map);
+    map.fitBounds(imageLayer._bounds);
+  });
+
+  
+
+ 
+
+}); // end $(), which is the jquery init function
+
+/**
+* called after a marker has changed 
+*
+* @param marker the leaflet marker
+* @param species the new species value
+*/
+var markerChange = function(marker,species) {
+  // don't do anything fancy, just redraw the CSV
+  writeCSV();
+}
+
+/** 
+* write the CSV textbox from the speciesMarkers array
+*/
+var writeCSV = function() {
+  // csv header
+  var res = "datasetid"+sepChar+"lat"+sepChar+"lon"+sepChar+"species\n";
+  const dsid = $(datasetid).val();
+
+  for (var i=0;i<speciesMarkers.length;i++) {
+      
+    res += dsid + sepChar
+           + speciesMarkers[i].getLatLng().lat.toFixed(6) + sepChar
+           + speciesMarkers[i].getLatLng().lng.toFixed(6) + sepChar
+           + speciesMarkers[i].species
+           + "\n";
+  
+  }
+  // write CSV to the textbox
+  $(outcsv).val(res);
+}
+
+/**
+* construct a select element with values from the form element "#possiblespecies".
+*
+* @param selectedText the string that should be selected, defaults to undefined
+*
+* @return A string like '<select><option value="...">...</option></select>'
+*/
+var constructSelectElementText = function(selectedText="undefined") {
+  var r = "<select>";
+  var sp = $(possiblespecies).val().split(",");
+  // add undefined as selectable value
+  sp.push("undefined");
+  for (var i=0;i<sp.length;i++) {
+    // create option, mark selected if its equal to the function parameter
+    r += "<option value='"+sp[i]+"'"+(sp[i]==selectedText?" selected":"")+">"+sp[i]+"</option>";
+  }
+  r += "</select>";
+  return r;
+}
+</script>
+
+<style type="text/css">
+#map {
+    height: 500px;
+    width:  500px;
+}
+
+h2 {
+  margin-top:0.1em;
+  margin-left:0.1em;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#helpcard {
+  width: 30%;
+  height: 500px;
+  scrolling: auto;
+  z-index: 1000;
+}
+
+#loadingindicator {
+  position: relative,
+  display: none,
+  background-color: white,
+  left: 200px,
+  top:  80px,
+  width: 30%,
+  z-index: 1000
+}
+</style>
+
+</head>
+<body>
+<div class="w3-container w3-right">
+<a href="#" id="openhelp">about/help</a>
+<ul class="w3-ul w3-border">
+<li>
+Image URL: <input type="text" id="url" size="60" value="https://upload.wikimedia.org/wikipedia/commons/2/26/Schloss_Benrath_04.04.2015-3_tonemapped.jpg"><br/>
+Width: <input type="text" id="w" size="6" value="3042"><br/>
+Height:<input type="text" id="h" size="6" value="4032"><br/>
+<input type="button" id="load_remote_image" value="Load remote image"><span id="loadingindicator" class="w3-yellow">Loading...please wait</span> <br/>
+</li>
+<li>
+Possible observations, separated by comma: <input type="text" id="possiblespecies" value="sheep,cow,velociraptor,trex,elefant,another_cow" size="70"/><br/>
+Dataset id: <input type="text" id="datasetid" name="datasetid" value="s1"/><br/>
+Separator character: <input type="text" id="sc" name="sc" value=";" size="1"/><br/>
+</li>
+<li>
+<textarea id="outcsv" rows="10" cols="50">
+</textarea>
+</li>
+<li>
+<div id="log" class="w3-yellow">
+</div>
+</li>
+</ul>
+
+
+</div>
+<div id="map" class="w3-left w3-margin"></div>
+<div class="w3-container" id="helpcard">
+  <div class="w3-card-4">
+
+  <header class="w3-container w3-blue">
+    
+    <h1>About this tool / help <span id="closehelp" class="w3-button w3-display-topright">&times;</span></h1>
+  </header>
+
+  <div class="w3-container">
+  <p>Image annotation for non-georeferenced images
+  </p>
+  </div>
+
+  </div> 
+</div>
+</body>
+</html>
