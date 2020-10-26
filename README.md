@@ -1,7 +1,7 @@
 # species-marker
 Mark species on uploaded TIF images
 
-Forked from @Tilmabv for own development annd reference. Per @Tilmanb:
+Forked from @Tilmanb for own development annd reference. Per @Tilmanb:
 
 demo: https://tilmanb.github.io/species-marker/
 
